@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGH – Administrador</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="operador.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════ -->
+<nav id="sidebar">
+
+  <div class="sb-topo">
+    <div class="sb-logo">
+      <span class="s">S</span><span class="g">G</span><span class="h">H</span>
+    </div>
+    <div class="sb-subtitulo">Gestão Hídrica</div>
+  </div>
+
+  <!-- Badge mostrando o cargo -->
+  <div class="sb-cargo">Administrador</div>
+
+  <ul class="sb-menu">
+
+    <li class="sb-secao">Painel</li>
+    <li><a href="#" class="ativo" onclick="irPara('dashboard', this)">
+      <i class="bi bi-grid-1x2"></i> Visão Geral
+    </a></li>
+
+    <li class="sb-secao">Gestão</li>
+    <li><a href="#" onclick="irPara('usuarios', this)">
+      <i class="bi bi-people"></i> Usuários
+    </a></li>
+    <li><a href="#" onclick="irPara('sensores', this)">
+      <i class="bi bi-cpu"></i> Sensores
+    </a></li>
+    <li><a href="#" onclick="irPara('templates', this)">
+      <i class="bi bi-file-earmark-text"></i> Templates de Doc.
+    </a></li>
+
+    <li class="sb-secao">Sistema</li>
+    <li><a href="#" onclick="irPara('configuracoes', this)">
+      <i class="bi bi-sliders"></i> Configurações
+    </a></li>
+    <li><a href="#" onclick="irPara('relatorios', this)">
+      <i class="bi bi-bar-chart-line"></i> Relatórios
+    </a></li>
+    <li><a href="#" onclick="irPara('integracoes', this)">
+      <i class="bi bi-plug"></i> Integrações
+    </a></li>
+
+  </ul>
+
+  <div class="sb-rodape">
+    <!-- Nome do admin logado -->
+    <div class="sb-usuario" id="sb-usuario">Carregando...</div>
+    <button class="btn-sair" onclick="sair()">
+      <i class="bi bi-box-arrow-left"></i> Sair
+    </button>
+  </div>
+
+</nav>
+
+<!-- ══════════════════════════════════════
+     CONTEÚDO
+══════════════════════════════════════ -->
+<div id="conteudo">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <span class="topbar-titulo" id="topbar-titulo">Visão Geral</span>
+    <div class="topbar-dir">
+      <span id="topbar-data"></span>
+    </div>
+  </div>
+
+  <div id="area">
+
+    <!-- ══════════════════════
+         TELA: DASHBOARD
+    ══════════════════════ -->
+    <section class="tela ativa" id="tela-dashboard">
+
+      <div class="tela-cab">
+        <h2 id="saudacao-admin">Bom dia, Admin</h2>
+        <p>Resumo geral do sistema.</p>
+      </div>
+
+      <!-- Cards de resumo -->
+      <div class="grade-resumo">
+        <div class="card-resumo">
+          <div class="cr-label">Usuarios</div>
+          <div class="cr-valor" id="res-usuarios">—</div>
+          <div class="cr-sub">cadastrados</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Sensores</div>
+          <div class="cr-valor" id="res-sensores">—</div>
+          <div class="cr-sub">ativos</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Medicoes hoje</div>
+          <div class="cr-valor" id="res-medicoes">—</div>
+          <div class="cr-sub">registradas</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Alertas</div>
+          <div class="cr-valor" id="res-alertas">—</div>
+          <div class="cr-sub">nao lidos</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Documentos</div>
+          <div class="cr-valor" id="res-docs">—</div>
+          <div class="cr-sub">pendentes aprovacao</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Templates</div>
+          <div class="cr-valor" id="res-templates">—</div>
+          <div class="cr-sub">disponiveis</div>
+        </div>
+      </div>
+
+      <!-- Últimas medições -->
+      <div class="card-form">
+        <h3>Ultimas medicoes registradas</h3>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sensor</th><th>Tipo</th><th>Valor</th><th>Origem</th><th>Data/Hora</th>
+              </tr>
+            </thead>
+            <tbody id="tb-ultimas">
+              <tr><td colspan="5" class="sem-dados">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: USUARIOS
+    ══════════════════════ -->
+    <section class="tela" id="tela-usuarios">
+
+      <div class="tela-cab">
+        <h2>Usuarios</h2>
+        <p>Cadastre, edite cargos e gerencie o acesso de cada colaborador.</p>
+      </div>
+
+      <!-- Formulário de novo usuário -->
+      <div class="card-form">
+        <h3>Novo usuario</h3>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Nome completo</label>
+            <input type="text" id="u-nome" placeholder="Ex: João Silva" />
+          </div>
+          <div class="campo">
+            <label>E-mail</label>
+            <input type="email" id="u-email" placeholder="joao@colortextil.com" />
+          </div>
+        </div>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Senha inicial</label>
+            <input type="password" id="u-senha" placeholder="Minimo 6 caracteres" />
+          </div>
+          <div class="campo">
+            <label>Cargo</label>
+            <select id="u-cargo">
+              <option value="operador">Operador</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primario" onclick="criarUsuario()">
+          <i class="bi bi-person-plus"></i> Criar usuario
+        </button>
+        <div class="feedback" id="fb-usuario"></div>
+      </div>
+
+      <!-- Lista de usuários -->
+      <div class="barra-acao">
+        <strong style="font-size:14px;">Usuarios cadastrados</strong>
+        <button class="btn btn-secundario" onclick="carregarUsuarios()">
+          <i class="bi bi-arrow-clockwise"></i> Atualizar
+        </button>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Cadastrado em</th><th>Alterar cargo</th></tr>
+          </thead>
+          <tbody id="tb-usuarios">
+            <tr><td colspan="5" class="sem-dados">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: SENSORES
+    ══════════════════════ -->
+    <section class="tela" id="tela-sensores">
+
+      <div class="tela-cab">
+        <h2>Sensores</h2>
+        <p>Cadastre e gerencie os sensores do sistema de monitoramento.</p>
+      </div>
+
+      <div class="card-form">
+        <h3>Novo sensor</h3>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Nome do sensor</label>
+            <input type="text" id="s-nome" placeholder="Ex: Sensor 1 - Entrada" maxlength="50" />
+          </div>
+          <div class="campo">
+            <label>Tipo de medicao</label>
+            <select id="s-tipo">
+              <option value="ph">pH</option>
+              <option value="turbidez">Turbidez (NTU)</option>
+              <option value="temperatura">Temperatura (°C)</option>
+              <option value="nivel">Nivel do Reservatorio (%)</option>
+              <option value="vazao">Vazao (L/min)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primario" onclick="criarSensor()">
+          <i class="bi bi-cpu"></i> Cadastrar sensor
+        </button>
+        <div class="feedback" id="fb-sensor"></div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Nome</th><th>Tipo</th><th>Cadastrado em</th><th>Remover</th></tr>
+          </thead>
+          <tbody id="tb-sensores">
+            <tr><td colspan="5" class="sem-dados">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: TEMPLATES
+    ══════════════════════ -->
+    <section class="tela" id="tela-templates">
+
+      <div class="tela-cab">
+        <h2>Templates de Documentos</h2>
+        <p>Crie os modelos que os operadores usarao para preencher documentos.</p>
+      </div>
+
+      <div class="card-form">
+        <h3>Novo template</h3>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Titulo do template</label>
+            <input type="text" id="t-titulo" placeholder="Ex: Relatorio de Turno" />
+          </div>
+          <div class="campo">
+            <label>Tipo</label>
+            <select id="t-tipo">
+              <option value="relatorio_turno">Relatorio de Turno</option>
+              <option value="laudo_analise">Laudo de Analise</option>
+              <option value="ordem_manutencao">Ordem de Manutencao</option>
+              <option value="registro_ocorrencia">Registro de Ocorrencia</option>
+            </select>
+          </div>
+        </div>
+        <div class="campo">
+          <label>Conteudo do template</label>
+          <!-- O operador vai preencher os campos marcados com [CAMPO] -->
+          <textarea id="t-conteudo" rows="8"
+            placeholder="Digite o modelo do documento. Use [CAMPO] para indicar onde o operador deve preencher.&#10;&#10;Exemplo:&#10;Data: [DATA]&#10;Operador: [NOME_OPERADOR]&#10;Turno: [TURNO]&#10;&#10;pH medido: [PH]&#10;Turbidez: [TURBIDEZ]&#10;Temperatura: [TEMPERATURA]&#10;&#10;Observacoes: [OBSERVACOES]"></textarea>
+          <span class="campo-nota">Use [CAMPO] para marcar onde o operador deve preencher.</span>
+        </div>
+        <button class="btn btn-primario" onclick="criarTemplate()">
+          <i class="bi bi-file-earmark-plus"></i> Salvar template
+        </button>
+        <div class="feedback" id="fb-template"></div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>Titulo</th><th>Tipo</th><th>Criado em</th><th>Remover</th></tr>
+          </thead>
+          <tbody id="tb-templates">
+            <tr><td colspan="4" class="sem-dados">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: CONFIGURAÇÕES
+    ══════════════════════ -->
+    <section class="tela" id="tela-configuracoes">
+
+      <div class="tela-cab">
+        <h2>Configuracoes</h2>
+        <p>Limites de alerta para cada parametro monitorado.</p>
+      </div>
+
+      <div class="card-form">
+        <h3>Limites de alerta</h3>
+        <p style="font-size:13px; color:var(--sec); margin-bottom:18px;">
+          Valores fora desses limites geram alertas automaticos no sistema.
+        </p>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>pH minimo</label>
+            <input type="number" id="cfg-ph-min" value="6.5" step="0.1" />
+          </div>
+          <div class="campo">
+            <label>pH maximo</label>
+            <input type="number" id="cfg-ph-max" value="8.5" step="0.1" />
+          </div>
+        </div>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Turbidez max. (NTU)</label>
+            <input type="number" id="cfg-turb" value="5.0" step="0.1" />
+          </div>
+          <div class="campo">
+            <label>Temperatura max. (°C)</label>
+            <input type="number" id="cfg-temp" value="30.0" step="0.5" />
+          </div>
+        </div>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Vazao max. (L/min)</label>
+            <input type="number" id="cfg-vazao" value="10.0" step="0.1" />
+          </div>
+          <div class="campo">
+            <label>Nivel minimo reservatorio (%)</label>
+            <input type="number" id="cfg-nivel" value="20" step="1" />
+          </div>
+        </div>
+        <button class="btn btn-primario" onclick="salvarConfig()">
+          <i class="bi bi-check-lg"></i> Salvar configuracoes
+        </button>
+        <div class="feedback" id="fb-config"></div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: RELATÓRIOS
+    ══════════════════════ -->
+    <section class="tela" id="tela-relatorios">
+
+      <div class="tela-cab">
+        <h2>Relatorios</h2>
+        <p>Consulte e exporte dados do sistema.</p>
+      </div>
+
+      <div class="card-form">
+        <h3>Filtros</h3>
+        <div class="grade-campos tres">
+          <div class="campo">
+            <label>Tipo de dado</label>
+            <select id="rel-tipo">
+              <option value="">Todos</option>
+              <option value="ph">pH</option>
+              <option value="turbidez">Turbidez</option>
+              <option value="temperatura">Temperatura</option>
+              <option value="nivel">Nivel</option>
+              <option value="vazao">Vazao</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Data inicio</label>
+            <input type="text" id="rel-inicio" placeholder="DD/MM/AAAA" />
+          </div>
+          <div class="campo">
+            <label>Data fim</label>
+            <input type="text" id="rel-fim" placeholder="DD/MM/AAAA" />
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primario" onclick="buscarRelatorio()">
+            <i class="bi bi-search"></i> Consultar
+          </button>
+          <button class="btn btn-secundario" onclick="exportarCSV()">
+            <i class="bi bi-download"></i> Exportar CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Sensor</th><th>Tipo</th><th>Valor</th><th>Origem</th><th>Data/Hora</th></tr>
+          </thead>
+          <tbody id="tb-relatorio">
+            <tr><td colspan="6" class="sem-dados">Use os filtros acima para consultar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: INTEGRAÇÕES
+    ══════════════════════ -->
+    <section class="tela" id="tela-integracoes">
+
+      <div class="tela-cab">
+        <h2>Integracoes</h2>
+        <p>Conexoes externas do sistema.</p>
+      </div>
+
+      <div class="card-form">
+        <h3>API do ESP8266</h3>
+        <div class="campo">
+          <label>URL para envio de dados (configurar no ESP8266)</label>
+          <input type="url" readonly
+            value="https://huvohrqgcrgbdqwhgrro.supabase.co/rest/v1/medicao"
+            style="color:var(--sec); font-size:12px;" />
+          <span class="campo-nota">Configure essa URL no codigo do ESP8266.</span>
+        </div>
+        <div class="bloco-codigo">
+// Headers necessarios no ESP8266:
+// apikey: [sua anon key]
+// Authorization: Bearer [sua anon key]
+// Content-Type: application/json
+// Prefer: return=minimal
+        </div>
+      </div>
+
+      <div class="card-form">
+        <h3>Chatbot Voiceflow</h3>
+        <div class="campo">
+          <label>Script do Voiceflow</label>
+          <textarea id="vf-script" rows="4"
+            placeholder="Cole aqui o script gerado no Voiceflow (Publish > Web)."></textarea>
+          <span class="campo-nota">Apos ativar, o chatbot aparecera em todas as telas.</span>
+        </div>
+        <button class="btn btn-primario" onclick="ativarChatbot()">
+          <i class="bi bi-chat-dots"></i> Ativar chatbot
+        </button>
+        <div class="feedback" id="fb-chatbot"></div>
+      </div>
+
+      <div class="card-form">
+        <h3>Estrutura do banco de dados</h3>
+        <div class="bloco-codigo">
+          
+perfil             → id, nome, email, cargo, criado_em
+sensor             → id, nome_sensor, tipo_sensor, data_cadastro
+medicao            → id_medicao, id_sensor, tipo, valor, data_hora, origem
+configuracao       → id, ph_min, ph_max, turb_max, temp_max
+tarefa             → id, titulo, descricao, atribuido_a, criado_por, status, prioridade, prazo
+template_documento → id, titulo, tipo, conteudo, criado_por
+documento          → id, id_template, titulo, conteudo, status, criado_por, enviado_para, aprovado_por
+alerta             → id, id_medicao, tipo, valor, mensagem, lido
+checklist_item     → id, descricao, obrigatorio, ordem
+checklist_turno    → id, id_operador, id_item, concluido, data_turno
+ordem_manutencao   → id, descricao, equipamento, prioridade, status, solicitado_por
+        </div>
+      </div>
+
+    </section>
+
+  </div><!-- fim #area -->
+</div><!-- fim #conteudo -->
+
+
+<script>
+
+  // ── Configuração do Supabase ──────────────────────────────
+  var SUPA_URL = 'https://huvohrqgcrgbdqwhgrro.supabase.co';
+  var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1dm9ocnFnY3JnYmRxd2hncnJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMTQ0NDEsImV4cCI6MjA4ODg5MDQ0MX0.1mNShzvzSPfljGKGVwMvDmY6_aiDxeaaHXVZ5K9i6oM';
+  var { createClient } = supabase;
+  var db = createClient(SUPA_URL, SUPA_KEY);
+
+  // Dados do relatório atual (para exportação CSV)
+  var dadosRelatorio = [];
+
+  // ── Inicialização ─────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    verificarSessao();
+    preencherTopbar();
+    carregarDashboard();
+    carregarUsuarios();
+    carregarSensores();
+    carregarTemplates();
+    carregarConfig();
+  });
+
+  // Verifica se o usuário está logado e é admin
+  async function verificarSessao() {
+    var sessao = await db.auth.getSession();
+    if (!sessao.data.session) {
+      window.location.href = 'index.html';
+      return;
+    }
+    var nome  = localStorage.getItem('sgh_nome')  || 'Admin';
+    var cargo = localStorage.getItem('sgh_cargo') || '';
+    if (cargo !== 'administrador') {
+      window.location.href = 'index.html';
+      return;
+    }
+    // Preenche nome no rodapé da sidebar
+    document.getElementById('sb-usuario').textContent = nome;
+    // Saudação no dashboard
+    var h = new Date().getHours();
+    var saud = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    document.getElementById('saudacao-admin').textContent = saud + ', ' + nome;
+  }
+
+  // Preenche data no topbar
+  function preencherTopbar() {
+    var data = new Date().toLocaleDateString('pt-BR', {
+      weekday: 'short', day: 'numeric', month: 'short'
+    });
+    document.getElementById('topbar-data').textContent = data;
+  }
+
+  // ── Navegação entre telas ─────────────────────────────────
+  function irPara(tela, link) {
+    // Esconde todas as telas
+    document.querySelectorAll('.tela').forEach(function(t) {
+      t.classList.remove('ativa');
+    });
+    // Remove classe ativo de todos os links
+    document.querySelectorAll('.sb-menu a').forEach(function(a) {
+      a.classList.remove('ativo');
+    });
+    // Mostra a tela escolhida
+    document.getElementById('tela-' + tela).classList.add('ativa');
+    // Marca o link como ativo
+    link.classList.add('ativo');
+    // Atualiza título no topbar
+    document.getElementById('topbar-titulo').textContent = link.textContent.trim();
+
+    return false; // Evita o # no URL
+  }
+
+  // ── DASHBOARD — carrega contadores ───────────────────────
+  async function carregarDashboard() {
+
+    // Conta usuários
+    var r1 = await db.from('perfil').select('id', { count: 'exact', head: true });
+    document.getElementById('res-usuarios').textContent = r1.count || 0;
+
+    // Conta sensores
+    var r2 = await db.from('sensor').select('id', { count: 'exact', head: true });
+    document.getElementById('res-sensores').textContent = r2.count || 0;
+
+    // Conta medições de hoje
+    var hoje = new Date().toISOString().split('T')[0];
+    var r3 = await db.from('medicao')
+      .select('id_medicao', { count: 'exact', head: true })
+      .gte('data_hora', hoje);
+    document.getElementById('res-medicoes').textContent = r3.count || 0;
+
+    // Conta alertas não lidos
+    var r4 = await db.from('alerta')
+      .select('id', { count: 'exact', head: true })
+      .eq('lido', false);
+    document.getElementById('res-alertas').textContent = r4.count || 0;
+
+    // Conta documentos pendentes de aprovação
+    var r5 = await db.from('documento')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'enviado');
+    document.getElementById('res-docs').textContent = r5.count || 0;
+
+    // Conta templates
+    var r6 = await db.from('template_documento').select('id', { count: 'exact', head: true });
+    document.getElementById('res-templates').textContent = r6.count || 0;
+
+    // Carrega as últimas 8 medições
+    var r7 = await db.from('medicao')
+      .select('*, sensor(nome_sensor)')
+      .order('data_hora', { ascending: false })
+      .limit(8);
+
+    var tb = document.getElementById('tb-ultimas');
+    if (!r7.data || r7.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="5" class="sem-dados">Nenhuma medicao registrada.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = r7.data.map(function(m) {
+      return '<tr>' +
+        '<td>' + (m.sensor ? m.sensor.nome_sensor : '—') + '</td>' +
+        '<td>' + labelTipo(m.tipo) + '</td>' +
+        '<td>' + m.valor + ' ' + unidade(m.tipo) + '</td>' +
+        '<td>' + (m.origem || '—') + '</td>' +
+        '<td>' + formatarData(m.data_hora) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // ── USUÁRIOS ──────────────────────────────────────────────
+
+  // Cria um novo usuário no Supabase Auth + tabela perfil
+  async function criarUsuario() {
+    var nome  = document.getElementById('u-nome').value.trim();
+    var email = document.getElementById('u-email').value.trim();
+    var senha = document.getElementById('u-senha').value;
+    var cargo = document.getElementById('u-cargo').value;
+    var fb    = document.getElementById('fb-usuario');
+
+    if (!nome || !email || !senha) {
+      mostrarFeedback(fb, 'Preencha todos os campos.', 'erro');
+      return;
+    }
+    if (senha.length < 6) {
+      mostrarFeedback(fb, 'A senha deve ter pelo menos 6 caracteres.', 'erro');
+      return;
+    }
+
+    // Cria conta no Supabase Auth
+    var auth = await db.auth.admin ? null : null; // Auth admin requer service_role key
+    // Como usamos anon key, vamos usar signUp e depois atualizar o perfil
+    var result = await db.auth.signUp({ email: email, password: senha });
+
+    if (result.error) {
+      mostrarFeedback(fb, 'Erro: ' + result.error.message, 'erro');
+      return;
+    }
+
+    // Insere o perfil na tabela
+    var uid = result.data.user.id;
+    var ins = await db.from('perfil').insert({
+      id: uid, nome: nome, email: email, cargo: cargo
+    });
+
+    if (ins.error) {
+      mostrarFeedback(fb, 'Erro ao salvar perfil: ' + ins.error.message, 'erro');
+      return;
+    }
+
+    // Limpa campos e atualiza lista
+    document.getElementById('u-nome').value  = '';
+    document.getElementById('u-email').value = '';
+    document.getElementById('u-senha').value = '';
+    mostrarFeedback(fb, 'Usuario criado com sucesso!', 'sucesso');
+    carregarUsuarios();
+  }
+
+  // Carrega a lista de usuários cadastrados
+  async function carregarUsuarios() {
+    var result = await db.from('perfil')
+      .select('*')
+      .order('criado_em', { ascending: false });
+
+    var tb = document.getElementById('tb-usuarios');
+    if (!result.data || result.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="5" class="sem-dados">Nenhum usuario cadastrado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = result.data.map(function(u) {
+      // Select inline para alterar o cargo direto na tabela
+      var opts = ['operador', 'supervisor', 'administrador'].map(function(c) {
+        return '<option value="' + c + '"' + (u.cargo === c ? ' selected' : '') + '>' +
+               c.charAt(0).toUpperCase() + c.slice(1) + '</option>';
+      }).join('');
+
+      return '<tr>' +
+        '<td>' + (u.nome || '—') + '</td>' +
+        '<td>' + (u.email || '—') + '</td>' +
+        '<td><span class="badge badge-' + (u.cargo || 'operador') + '">' + (u.cargo || '—') + '</span></td>' +
+        '<td>' + formatarData(u.criado_em) + '</td>' +
+        '<td>' +
+          '<select onchange="alterarCargo(\'' + u.id + '\', this.value)" style="padding:4px 8px; font-size:12px;">' +
+          opts + '</select>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // Altera o cargo de um usuário diretamente na tabela
+  async function alterarCargo(uid, novoCargo) {
+    var result = await db.from('perfil')
+      .update({ cargo: novoCargo })
+      .eq('id', uid);
+
+    if (result.error) {
+      alert('Erro ao alterar cargo: ' + result.error.message);
+    }
+  }
+
+  // ── SENSORES ──────────────────────────────────────────────
+
+  async function criarSensor() {
+    var nome = document.getElementById('s-nome').value.trim();
+    var tipo = document.getElementById('s-tipo').value;
+    var fb   = document.getElementById('fb-sensor');
+
+    if (!nome) {
+      mostrarFeedback(fb, 'Informe o nome do sensor.', 'erro');
+      return;
+    }
+
+    var result = await db.from('sensor').insert({
+      nome_sensor: nome,
+      tipo_sensor: tipo,
+      data_cadastro: new Date().toISOString()
+    });
+
+    if (result.error) {
+      mostrarFeedback(fb, 'Erro: ' + result.error.message, 'erro');
+      return;
+    }
+
+    document.getElementById('s-nome').value = '';
+    mostrarFeedback(fb, 'Sensor cadastrado com sucesso!', 'sucesso');
+    carregarSensores();
+  }
+
+  async function carregarSensores() {
+    var result = await db.from('sensor')
+      .select('*')
+      .order('data_cadastro', { ascending: false });
+
+    var tb = document.getElementById('tb-sensores');
+    if (!result.data || result.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="5" class="sem-dados">Nenhum sensor cadastrado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = result.data.map(function(s) {
+      return '<tr>' +
+        '<td>' + s.id + '</td>' +
+        '<td>' + s.nome_sensor + '</td>' +
+        '<td>' + labelTipo(s.tipo_sensor) + '</td>' +
+        '<td>' + formatarData(s.data_cadastro) + '</td>' +
+        '<td>' +
+          '<button class="btn btn-perigo" style="padding:4px 10px; font-size:12px;" ' +
+          'onclick="removerSensor(' + s.id + ')">' +
+          '<i class="bi bi-trash"></i></button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  async function removerSensor(id) {
+    if (!confirm('Remover este sensor? Isso tambem remove as medicoes associadas.')) return;
+    await db.from('sensor').delete().eq('id', id);
+    carregarSensores();
+  }
+
+  // ── TEMPLATES DE DOCUMENTOS ───────────────────────────────
+
+  async function criarTemplate() {
+    var titulo   = document.getElementById('t-titulo').value.trim();
+    var tipo     = document.getElementById('t-tipo').value;
+    var conteudo = document.getElementById('t-conteudo').value.trim();
+    var fb       = document.getElementById('fb-template');
+    var uid      = localStorage.getItem('sgh_uid');
+
+    if (!titulo || !conteudo) {
+      mostrarFeedback(fb, 'Preencha o titulo e o conteudo.', 'erro');
+      return;
+    }
+
+    var result = await db.from('template_documento').insert({
+      titulo: titulo,
+      tipo: tipo,
+      conteudo: conteudo,
+      criado_por: uid,
+      criado_em: new Date().toISOString()
+    });
+
+    if (result.error) {
+      mostrarFeedback(fb, 'Erro: ' + result.error.message, 'erro');
+      return;
+    }
+
+    document.getElementById('t-titulo').value   = '';
+    document.getElementById('t-conteudo').value = '';
+    mostrarFeedback(fb, 'Template salvo com sucesso!', 'sucesso');
+    carregarTemplates();
+  }
+
+  async function carregarTemplates() {
+    var result = await db.from('template_documento')
+      .select('*')
+      .order('criado_em', { ascending: false });
+
+    var tb = document.getElementById('tb-templates');
+    if (!result.data || result.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="4" class="sem-dados">Nenhum template cadastrado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = result.data.map(function(t) {
+      return '<tr>' +
+        '<td>' + t.titulo + '</td>' +
+        '<td>' + labelDocTipo(t.tipo) + '</td>' +
+        '<td>' + formatarData(t.criado_em) + '</td>' +
+        '<td>' +
+          '<button class="btn btn-perigo" style="padding:4px 10px; font-size:12px;" ' +
+          'onclick="removerTemplate(\'' + t.id + '\')">' +
+          '<i class="bi bi-trash"></i></button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  async function removerTemplate(id) {
+    if (!confirm('Remover este template?')) return;
+    await db.from('template_documento').delete().eq('id', id);
+    carregarTemplates();
+  }
+
+  // ── CONFIGURAÇÕES ─────────────────────────────────────────
+
+  async function carregarConfig() {
+    var result = await db.from('configuracao').select('*').eq('id', 1).single();
+    if (!result.data) return;
+    var c = result.data;
+    document.getElementById('cfg-ph-min').value = c.ph_min  || 6.5;
+    document.getElementById('cfg-ph-max').value = c.ph_max  || 8.5;
+    document.getElementById('cfg-turb').value   = c.turb_max || 5.0;
+    document.getElementById('cfg-temp').value   = c.temp_max || 30.0;
+  }
+
+  async function salvarConfig() {
+    var fb = document.getElementById('fb-config');
+    var result = await db.from('configuracao').upsert({
+      id:       1,
+      ph_min:   parseFloat(document.getElementById('cfg-ph-min').value),
+      ph_max:   parseFloat(document.getElementById('cfg-ph-max').value),
+      turb_max: parseFloat(document.getElementById('cfg-turb').value),
+      temp_max: parseFloat(document.getElementById('cfg-temp').value),
+      atualizado_em: new Date().toISOString()
+    });
+
+    if (result.error) {
+      mostrarFeedback(fb, 'Erro ao salvar: ' + result.error.message, 'erro');
+    } else {
+      mostrarFeedback(fb, 'Configuracoes salvas com sucesso!', 'sucesso');
+    }
+  }
+
+  // ── RELATÓRIOS ────────────────────────────────────────────
+
+  async function buscarRelatorio() {
+    var tipo   = document.getElementById('rel-tipo').value;
+    var inicio = document.getElementById('rel-inicio').value;
+    var fim    = document.getElementById('rel-fim').value;
+    var tb     = document.getElementById('tb-relatorio');
+
+    tb.innerHTML = '<tr><td colspan="6" class="sem-dados">Buscando...</td></tr>';
+
+    var query = db.from('medicao')
+      .select('*, sensor(nome_sensor)')
+      .order('data_hora', { ascending: false })
+      .limit(200);
+
+    if (tipo)   query = query.eq('tipo', tipo);
+    if (inicio) query = query.gte('data_hora', converterData(inicio));
+    if (fim)    query = query.lte('data_hora', converterData(fim) + 'T23:59:59');
+
+    var result = await query;
+    dadosRelatorio = result.data || [];
+
+    if (dadosRelatorio.length === 0) {
+      tb.innerHTML = '<tr><td colspan="6" class="sem-dados">Nenhum resultado encontrado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = dadosRelatorio.map(function(m, i) {
+      return '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + (m.sensor ? m.sensor.nome_sensor : '—') + '</td>' +
+        '<td>' + labelTipo(m.tipo) + '</td>' +
+        '<td>' + m.valor + ' ' + unidade(m.tipo) + '</td>' +
+        '<td>' + (m.origem || '—') + '</td>' +
+        '<td>' + formatarData(m.data_hora) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // Exporta os dados da consulta atual como CSV
+  function exportarCSV() {
+    if (dadosRelatorio.length === 0) {
+      alert('Realize uma consulta antes de exportar.');
+      return;
+    }
+
+    var linhas = ['Sensor,Tipo,Valor,Unidade,Origem,Data/Hora'];
+    dadosRelatorio.forEach(function(m) {
+      linhas.push([
+        m.sensor ? m.sensor.nome_sensor : '',
+        m.tipo,
+        m.valor,
+        unidade(m.tipo),
+        m.origem || '',
+        formatarData(m.data_hora)
+      ].join(','));
+    });
+
+    // Cria e dispara o download
+    var blob = new Blob([linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href     = url;
+    link.download = 'sgh_relatorio_' + new Date().toISOString().split('T')[0] + '.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── INTEGRAÇÕES — chatbot ─────────────────────────────────
+
+  function ativarChatbot() {
+    var script = document.getElementById('vf-script').value.trim();
+    var fb     = document.getElementById('fb-chatbot');
+
+    if (!script) {
+      mostrarFeedback(fb, 'Cole o script do Voiceflow antes de ativar.', 'erro');
+      return;
+    }
+
+    // Injeta o script na página dinamicamente
+    var div = document.createElement('div');
+    div.innerHTML = script;
+    document.body.appendChild(div);
+    div.querySelectorAll('script').forEach(function(s) {
+      var novo = document.createElement('script');
+      if (s.src) novo.src = s.src;
+      else novo.textContent = s.textContent;
+      document.body.appendChild(novo);
+    });
+
+    mostrarFeedback(fb, 'Chatbot ativado com sucesso!', 'sucesso');
+  }
+
+  // ── Sair do sistema ───────────────────────────────────────
+  async function sair() {
+    await db.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  // ── Utilitários ───────────────────────────────────────────
+
+  // Exibe mensagem de feedback (sucesso ou erro) e some após 3s
+  function mostrarFeedback(el, msg, tipo) {
+    el.textContent = msg;
+    el.className   = 'feedback ' + tipo;
+    el.style.display = 'block';
+    setTimeout(function() { el.style.display = 'none'; }, 3000);
+  }
+
+  // Converte data DD/MM/AAAA para AAAA-MM-DD (formato ISO)
+  function converterData(str) {
+    var partes = str.split('/');
+    if (partes.length !== 3) return str;
+    return partes[2] + '-' + partes[1] + '-' + partes[0];
+  }
+
+  // Formata timestamp ISO para DD/MM/AAAA HH:MM
+  function formatarData(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  // Rótulo legível para o tipo de medição
+  function labelTipo(tipo) {
+    var labels = {
+      ph: 'pH', turbidez: 'Turbidez',
+      temperatura: 'Temperatura', nivel: 'Nivel', vazao: 'Vazao'
+    };
+    return labels[tipo] || tipo;
+  }
+
+  // Unidade de medida para cada tipo
+  function unidade(tipo) {
+    var un = { ph: '', turbidez: 'NTU', temperatura: '°C', nivel: '%', vazao: 'L/min' };
+    return un[tipo] || '';
+  }
+
+  // Rótulo para tipo de documento
+  function labelDocTipo(tipo) {
+    var labels = {
+      relatorio_turno: 'Relatorio de Turno',
+      laudo_analise: 'Laudo de Analise',
+      ordem_manutencao: 'Ordem de Manutencao',
+      registro_ocorrencia: 'Registro de Ocorrencia'
+    };
+    return labels[tipo] || tipo;
+  }
+
+</script>
+
+</body>
+</html>

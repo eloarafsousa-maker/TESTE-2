@@ -1,0 +1,189 @@
+    /* ── Variáveis de cor do sistema ── */
+    :root {
+      --azul:    #1a4fa0;
+      --laranja: #e8472a;
+      --fundo:   #f0f2f5;
+      --borda:   #cdd2db;
+      --texto:   #1c1c2e;
+      --sec:     #5a6278;
+      --verde:   #1a7a3a;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── Fundo escuro com gradiente sutil ── */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d1b36;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 70% 50%, #1a3a6e44, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, #0a4a6e33, transparent 50%);
+      z-index: 0;
+    }
+
+    /* ── Card branco central ── */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      width: 100%;
+      max-width: 380px;
+      border-radius: 6px;
+      padding: 40px 36px 32px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }
+
+    /* ── Logo SGH ── */
+    .logo { text-align: center; margin-bottom: 28px; }
+
+    .logo-letras {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      line-height: 1;
+    }
+    .logo-letras .s, .logo-letras .h { color: var(--laranja); }
+    .logo-letras .g                   { color: var(--azul); }
+
+    .logo-nome {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--azul);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+    .logo-empresa { font-size: 12px; color: var(--sec); margin-top: 2px; }
+
+    /* ── Campos do formulário ── */
+    .campo { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--sec);
+      margin-bottom: 5px;
+    }
+
+    /* Campo senha tem posição relativa para o botão "ver" */
+    .campo-senha { position: relative; }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 11px 13px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: var(--texto);
+      background: var(--fundo);
+      border: 1.5px solid var(--borda);
+      border-radius: 4px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    input:focus        { outline: none; border-color: var(--azul); background: #fff; }
+    input.invalido     { border-color: var(--laranja); } /* destaca campo com erro */
+
+    /* Botão "ver / ocultar" dentro do campo de senha */
+    .btn-ver {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--sec);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      padding: 4px 6px;
+    }
+    .btn-ver:hover { color: var(--azul); }
+
+    /* ── Mensagem de erro ou sucesso ── */
+    .mensagem {
+      font-size: 13px;
+      padding: 9px 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      display: none; /* exibido via JS */
+    }
+    .mensagem.erro    { background: #fde8e8; border: 1px solid #f5b8b8; color: #a01a1a; }
+    .mensagem.sucesso { background: #e8f5ec; border: 1px solid #a8d5b5; color: var(--verde); }
+
+    /* ── Botão de login ── */
+    .btn-entrar {
+      width: 100%;
+      padding: 13px;
+      background: var(--azul);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-entrar:hover    { background: #112f6a; }
+    .btn-entrar:disabled { background: #9aabb8; cursor: not-allowed; }
+
+    /* Spinner que aparece durante o carregamento */
+    .loader {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: girar 0.6s linear infinite;
+      display: none;
+    }
+    @keyframes girar { to { transform: rotate(360deg); } }
+
+    /* ── Badge que mostra o perfil detectado após login ── */
+    .perfil-detectado {
+      display: none; /* exibido via JS após autenticação */
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      border-left: 3px solid;
+    }
+    /* Cor diferente para cada cargo */
+    .perfil-detectado.operador      { background: #e8f5ec; border-color: var(--verde);  color: #0f4d25; }
+    .perfil-detectado.supervisor    { background: #eef0fd; border-color: #4a5cc7;        color: #2a3580; }
+    .perfil-detectado.administrador { background: #fff3e8; border-color: var(--laranja); color: #7a2010; }
+
+    .pd-icone {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+      background: rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+    .pd-cargo { font-weight: 700; font-size: 13px; }
+    .pd-nome  { font-size: 12px; opacity: 0.75; margin-top: 1px; }
+
+    .rodape { text-align: center; font-size: 11px; color: #bbb; margin-top: 20px; }

@@ -1,0 +1,414 @@
+    /* ── Variáveis globais ── */
+    :root {
+      --azul:      #1a4fa0;
+      --azul-esc:  #112f6a;
+      --laranja:   #e8472a;
+      --fundo:     #f0f2f5;
+      --borda:     #dde1e9;
+      --texto:     #1c1c2e;
+      --sec:       #5a6278;
+      --verde:     #1a7a3a;
+      --sidebar-w: 220px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--fundo);
+      color: var(--texto);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ══════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════ */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: #0d1b36;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+    }
+
+    /* Topo da sidebar com logo */
+    .sb-topo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .sb-logo {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      line-height: 1;
+    }
+    .sb-logo .s, .sb-logo .h { color: var(--laranja); }
+    .sb-logo .g               { color: #4a8fe8; }
+    .sb-subtitulo {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Badge de cargo do usuário logado */
+    .sb-cargo {
+      margin: 12px 20px 0;
+      padding: 5px 10px;
+      background: rgba(232,71,42,0.15);
+      border: 1px solid rgba(232,71,42,0.3);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--laranja);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Menu de navegação */
+    .sb-menu {
+      list-style: none;
+      padding: 16px 0;
+      flex: 1;
+    }
+
+    .sb-menu li a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: rgba(255,255,255,0.55);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .sb-menu li a:hover {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.9);
+    }
+    /* Item ativo no menu */
+    .sb-menu li a.ativo {
+      color: #fff;
+      background: rgba(74,143,232,0.12);
+      border-left-color: #4a8fe8;
+    }
+    .sb-menu li a i { font-size: 15px; }
+
+    /* Separador de seção no menu */
+    .sb-secao {
+      padding: 12px 20px 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Rodapé da sidebar com nome e botão sair */
+    .sb-rodape {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .sb-usuario {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-sair {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(232,71,42,0.1);
+      border: 1px solid rgba(232,71,42,0.25);
+      border-radius: 4px;
+      color: var(--laranja);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-sair:hover { background: rgba(232,71,42,0.2); }
+
+    /* ══════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+    ══════════════════════════════════════ */
+    #conteudo {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topbar */
+    #topbar {
+      background: #fff;
+      border-bottom: 1px solid var(--borda);
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-titulo {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--texto);
+    }
+    .topbar-dir {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--sec);
+    }
+
+    /* Área das seções */
+    #area {
+      padding: 28px;
+      flex: 1;
+    }
+
+    /* Cada tela é uma section — só a ativa é exibida */
+    .tela { display: none; }
+    .tela.ativa { display: block; }
+
+    /* ── Cabeçalho interno das telas ── */
+    .tela-cab {
+      margin-bottom: 24px;
+    }
+    .tela-cab h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--texto);
+    }
+    .tela-cab p {
+      font-size: 13px;
+      color: var(--sec);
+      margin-top: 3px;
+    }
+
+    /* ── Cards de resumo (dashboard) ── */
+    .grade-resumo {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .card-resumo {
+      background: #fff;
+      border: 1px solid var(--borda);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .cr-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sec);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cr-valor {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--texto);
+      margin: 6px 0 2px;
+    }
+    .cr-sub { font-size: 12px; color: var(--sec); }
+
+    /* ── Formulários ── */
+    .card-form {
+      background: #fff;
+      border: 1px solid var(--borda);
+      border-radius: 6px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .card-form h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--borda);
+    }
+
+    /* Grade de campos lado a lado */
+    .grade-campos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .grade-campos.tres { grid-template-columns: 1fr 1fr 1fr; }
+    .grade-campos.um   { grid-template-columns: 1fr; }
+
+    .campo { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--sec);
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="url"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--texto);
+      background: var(--fundo);
+      border: 1.5px solid var(--borda);
+      border-radius: 4px;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--azul);
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 90px; }
+    .campo-nota {
+      font-size: 11px;
+      color: var(--sec);
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* ── Botões ── */
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primario  { background: var(--azul);   color: #fff; }
+    .btn-primario:hover  { background: var(--azul-esc); }
+    .btn-perigo    { background: #fde8e8; color: #a01a1a; border: 1px solid #f5b8b8; }
+    .btn-perigo:hover    { background: #fbd0d0; }
+    .btn-secundario { background: var(--fundo); color: var(--texto); border: 1px solid var(--borda); }
+    .btn-secundario:hover { background: #e4e7ed; }
+
+    /* ── Tabelas ── */
+    .tabela-wrap {
+      background: #fff;
+      border: 1px solid var(--borda);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: var(--fundo);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sec);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--borda);
+    }
+    tbody td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f0f2f5;
+      color: var(--texto);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafbfc; }
+    .sem-dados { text-align: center; color: var(--sec); padding: 32px !important; }
+
+    /* ── Badges de status ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-operador      { background: #e8f5ec; color: #0f4d25; }
+    .badge-supervisor    { background: #eef0fd; color: #2a3580; }
+    .badge-administrador { background: #fff3e8; color: #7a2010; }
+    .badge-ativo   { background: #e8f5ec; color: #0f4d25; }
+    .badge-inativo { background: #f5f5f5; color: #888; }
+
+    /* ── Mensagens de feedback ── */
+    .feedback {
+      padding: 9px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    .feedback.sucesso { background: #e8f5ec; border: 1px solid #a8d5b5; color: var(--verde); }
+    .feedback.erro    { background: #fde8e8; border: 1px solid #f5b8b8; color: #a01a1a; }
+
+    /* ── Linha de filtro / ação acima de tabelas ── */
+    .barra-acao {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+    .barra-acao input[type="text"] {
+      max-width: 260px;
+      padding: 8px 11px;
+      font-size: 13px;
+    }
+
+    /* ── Bloco SQL / código ── */
+    .bloco-codigo {
+      background: #0d1b36;
+      color: #a8d5b5;
+      border-radius: 4px;
+      padding: 14px 16px;
+      font-size: 12px;
+      font-family: monospace;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    /* ── Responsivo básico ── */
+    @media (max-width: 768px) {
+      #sidebar { display: none; }
+      #conteudo { margin-left: 0; }
+      .grade-campos, .grade-campos.tres { grid-template-columns: 1fr; }
+    }

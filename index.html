@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGH – Acesso</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Logo -->
+  <div class="logo">
+    <div class="logo-letras">
+      <span class="s">S</span><span class="g">G</span><span class="h">H</span>
+    </div>
+    <p class="logo-nome">Sistema de Gestão Hídrica</p>
+    <p class="logo-empresa">Color &amp; Têxtil</p>
+  </div>
+
+  <!-- Área de mensagens (erro ou sucesso) -->
+  <div id="msg" class="mensagem"></div>
+
+  <!-- Campo e-mail -->
+  <div class="campo">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" placeholder="seu@colortextil.com"
+           autofocus autocomplete="email" />
+  </div>
+
+  <!-- Campo senha com botão ver/ocultar -->
+  <div class="campo">
+    <label for="senha">Senha</label>
+    <div class="campo-senha">
+      <input type="password" id="senha" placeholder="Sua senha"
+             autocomplete="current-password" />
+      <button class="btn-ver" type="button" id="btn-ver" tabindex="-1">ver</button>
+    </div>
+  </div>
+
+  <!-- Botão de login com loader interno -->
+  <button class="btn-entrar" id="btn" onclick="fazerLogin()">
+    <div class="loader" id="loader"></div>
+    <span id="btn-texto">Entrar</span>
+  </button>
+
+  <!-- Badge exibido após login bem-sucedido -->
+  <div class="perfil-detectado" id="perfil-detectado">
+    <div class="pd-icone" id="pd-icone"></div>
+    <div>
+      <div class="pd-cargo" id="pd-cargo"></div>
+      <div class="pd-nome"  id="pd-nome"></div>
+    </div>
+  </div>
+
+  <p class="rodape">SGH v1.0 &mdash; Color &amp; Têxtil &copy; 2025</p>
+
+</div>
+
+<script>
+
+  // ── Configuração do Supabase ──────────────────────────────
+  const SUPA_URL = 'https://huvohrqgcrgbdqwhgrro.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1dm9ocnFnY3JnYmRxd2hncnJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMTQ0NDEsImV4cCI6MjA4ODg5MDQ0MX0.1mNShzvzSPfljGKGVwMvDmY6_aiDxeaaHXVZ5K9i6oM';
+  const { createClient } = supabase;
+  const db = createClient(SUPA_URL, SUPA_KEY);
+
+  // ── Redirecionamento por cargo ────────────────────────────
+  const PAGINAS = {
+    operador:      'operador.html',
+    supervisor:    'supervisor.html',
+    administrador: 'admin.html'
+  };
+
+  const LABELS = {
+    operador:      'Operador',
+    supervisor:    'Supervisor',
+    administrador: 'Administrador'
+  };
+
+  // ── Botão ver/ocultar senha ───────────────────────────────
+  document.getElementById('btn-ver').addEventListener('click', function() {
+    var inp = document.getElementById('senha');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      this.textContent = 'ocultar';
+    } else {
+      inp.type = 'password';
+      this.textContent = 'ver';
+    }
+  });
+
+  // ── Enter no e-mail avança para senha ─────────────────────
+  document.getElementById('email').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('senha').focus();
+  });
+
+  // ── Enter na senha dispara o login ───────────────────────
+  document.getElementById('senha').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') fazerLogin();
+  });
+
+  // ── Limpa mensagem ao digitar ─────────────────────────────
+  document.getElementById('email').addEventListener('input', limparMsg);
+  document.getElementById('senha').addEventListener('input', limparMsg);
+
+  // Exibe uma mensagem de erro ou sucesso
+  function mostrarMsg(texto, tipo) {
+    var el = document.getElementById('msg');
+    el.textContent = texto;
+    el.className   = 'mensagem ' + tipo;
+    el.style.display = 'block';
+  }
+
+  // Remove mensagem e marcações de campo inválido
+  function limparMsg() {
+    document.getElementById('msg').style.display = 'none';
+    document.getElementById('email').classList.remove('invalido');
+    document.getElementById('senha').classList.remove('invalido');
+  }
+
+  // Liga ou desliga o estado de carregamento no botão
+  function setCarregando(sim) {
+    document.getElementById('btn').disabled          = sim;
+    document.getElementById('loader').style.display  = sim ? 'block' : 'none';
+    document.getElementById('btn-texto').textContent = sim ? 'Verificando...' : 'Entrar';
+  }
+
+  // Exibe o badge com o cargo detectado
+  function mostrarPerfil(cargo, nome) {
+    var el = document.getElementById('perfil-detectado');
+    document.getElementById('pd-icone').textContent = (LABELS[cargo] || cargo).charAt(0);
+    document.getElementById('pd-cargo').textContent = LABELS[cargo] || cargo;
+    document.getElementById('pd-nome').textContent  = nome;
+    el.className     = 'perfil-detectado ' + cargo;
+    el.style.display = 'flex';
+  }
+
+  // ── Função principal de login ─────────────────────────────
+  async function fazerLogin() {
+    var email = document.getElementById('email').value.trim();
+    var senha = document.getElementById('senha').value;
+
+    limparMsg();
+
+    // Validação básica antes de chamar o servidor
+    if (!email) {
+      mostrarMsg('Informe o e-mail.', 'erro');
+      document.getElementById('email').classList.add('invalido');
+      document.getElementById('email').focus();
+      return;
+    }
+    if (!senha) {
+      mostrarMsg('Informe a senha.', 'erro');
+      document.getElementById('senha').classList.add('invalido');
+      document.getElementById('senha').focus();
+      return;
+    }
+
+    setCarregando(true);
+
+    try {
+
+      // 1. Autenticar no Supabase com e-mail e senha
+      var auth = await db.auth.signInWithPassword({ email: email, password: senha });
+
+      if (auth.error) {
+        mostrarMsg('E-mail ou senha incorretos. Tente novamente.', 'erro');
+        document.getElementById('senha').value = '';
+        document.getElementById('senha').classList.add('invalido');
+        document.getElementById('senha').focus();
+        return;
+      }
+
+      // 2. Buscar o perfil do usuário na tabela "perfil"
+      var resultado = await db
+        .from('perfil')
+        .select('id, nome, cargo')
+        .eq('id', auth.data.user.id)
+        .single();
+
+      var perfil = resultado.data;
+
+      // 3. Se o perfil não existir ainda, criar com cargo padrão "operador"
+      if (!perfil) {
+        var nomeInicial = email.split('@')[0];
+        await db.from('perfil').insert({
+          id:    auth.data.user.id,
+          nome:  nomeInicial,
+          email: email,
+          cargo: 'operador'
+        });
+        perfil = { cargo: 'operador', nome: nomeInicial };
+      }
+
+      var cargo = (perfil.cargo || 'operador').toLowerCase();
+      var nome  = perfil.nome || email.split('@')[0];
+
+      // 4. Salvar dados da sessão no localStorage para uso nas outras telas
+      localStorage.setItem('sgh_cargo', cargo);
+      localStorage.setItem('sgh_nome',  nome);
+      localStorage.setItem('sgh_email', email);
+      localStorage.setItem('sgh_uid',   auth.data.user.id);
+
+      // 5. Mostrar badge e mensagem de sucesso
+      mostrarPerfil(cargo, nome);
+      mostrarMsg('Acesso autorizado. Redirecionando...', 'sucesso');
+
+      // 6. Redirecionar para a tela correta após 1 segundo
+      setTimeout(function() {
+        window.location.href = PAGINAS[cargo] || 'operador.html';
+      }, 1000);
+
+    } catch (err) {
+      mostrarMsg('Erro de conexao. Verifique sua internet.', 'erro');
+      console.error(err);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  // ── Se já estiver logado, redireciona direto ──────────────
+  (async function() {
+    var sessao = await db.auth.getSession();
+    if (sessao.data.session) {
+      var cargo = localStorage.getItem('sgh_cargo') || 'operador';
+      window.location.href = PAGINAS[cargo] || 'operador.html';
+    }
+  });
+
+</script>
+
+</body>
+</html>

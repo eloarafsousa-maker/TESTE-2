@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGH – Supervisor</title>
+  <link rel="stylesheet" href="supervisor.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════ -->
+<nav id="sidebar">
+
+  <div class="sb-topo">
+    <div class="sb-logo">
+      <span class="s">S</span><span class="g">G</span><span class="h">H</span>
+    </div>
+    <div class="sb-subtitulo">Gestão Hídrica</div>
+  </div>
+
+  <div class="sb-cargo">Supervisor</div>
+
+  <ul class="sb-menu">
+
+    <li class="sb-secao">Painel</li>
+    <li><a href="#" class="ativo" onclick="irPara('dashboard', this)">
+      <i class="bi bi-grid-1x2"></i> Visão Geral
+    </a></li>
+    <li><a href="#" onclick="irPara('alertas', this)">
+      <i class="bi bi-bell"></i> Alertas
+      <span class="sb-badge" id="badge-alertas">0</span>
+    </a></li>
+
+    <li class="sb-secao">Equipe</li>
+    <li><a href="#" onclick="irPara('equipe', this)">
+      <i class="bi bi-people"></i> Equipe
+    </a></li>
+    <li><a href="#" onclick="irPara('tarefas', this)">
+      <i class="bi bi-list-task"></i> Tarefas
+      <span class="sb-badge" id="badge-tarefas">0</span>
+    </a></li>
+
+    <li class="sb-secao">Aprovações</li>
+    <li><a href="#" onclick="irPara('leituras', this)">
+      <i class="bi bi-check2-circle"></i> Validar Leituras
+    </a></li>
+    <li><a href="#" onclick="irPara('documentos', this)">
+      <i class="bi bi-file-earmark-check"></i> Aprovar Documentos
+      <span class="sb-badge" id="badge-docs">0</span>
+    </a></li>
+    <li><a href="#" onclick="irPara('manutencao', this)">
+      <i class="bi bi-tools"></i> Ordens de Manut.
+    </a></li>
+
+    <li class="sb-secao">Relatório</li>
+    <li><a href="#" onclick="irPara('relatorio', this)">
+      <i class="bi bi-bar-chart-line"></i> Relatorio de Turno
+    </a></li>
+    <li><a href="#" onclick="irPara('documentos-proprios', this)">
+      <i class="bi bi-file-earmark-text"></i> Meus Documentos
+    </a></li>
+
+  </ul>
+
+  <div class="sb-rodape">
+    <div class="sb-usuario" id="sb-usuario">Carregando...</div>
+    <button class="btn-sair" onclick="sair()">
+      <i class="bi bi-box-arrow-left"></i> Sair
+    </button>
+  </div>
+
+</nav>
+
+<!-- ══════════════════════════════════════
+     CONTEÚDO
+══════════════════════════════════════ -->
+<div id="conteudo">
+
+  <div id="topbar">
+    <span class="topbar-titulo" id="topbar-titulo">Visão Geral</span>
+    <div class="topbar-dir">
+      <span id="topbar-data"></span>
+    </div>
+  </div>
+
+  <div id="area">
+
+    <!-- ══════════════════════
+         TELA: DASHBOARD
+    ══════════════════════ -->
+    <section class="tela ativa" id="tela-dashboard">
+
+      <div class="tela-cab">
+        <h2 id="saudacao">Bom dia!</h2>
+        <p>Resumo do turno em andamento.</p>
+      </div>
+
+      <!-- Contadores rápidos -->
+      <div class="grade-resumo">
+        <div class="card-resumo">
+          <div class="cr-label">Operadores</div>
+          <div class="cr-valor" id="res-operadores">—</div>
+          <div class="cr-sub">na equipe</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Medicoes hoje</div>
+          <div class="cr-valor" id="res-medicoes">—</div>
+          <div class="cr-sub">registradas</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Alertas</div>
+          <div class="cr-valor" id="res-alertas">—</div>
+          <div class="cr-sub">nao lidos</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Docs pendentes</div>
+          <div class="cr-valor" id="res-docs">—</div>
+          <div class="cr-sub">aguardando aprovacao</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Tarefas abertas</div>
+          <div class="cr-valor" id="res-tarefas">—</div>
+          <div class="cr-sub">em andamento</div>
+        </div>
+        <div class="card-resumo">
+          <div class="cr-label">Ordens manut.</div>
+          <div class="cr-valor" id="res-ordens">—</div>
+          <div class="cr-sub">abertas</div>
+        </div>
+      </div>
+
+      <!-- Alertas recentes no dashboard -->
+      <div class="card">
+        <h3>Alertas recentes</h3>
+        <div id="alertas-dashboard">
+          <p style="color:var(--sec); font-size:13px;">Carregando...</p>
+        </div>
+      </div>
+
+      <!-- Últimas medições registradas pelos operadores -->
+      <div class="card">
+        <h3>Ultimas leituras dos operadores</h3>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>Sensor</th><th>Tipo</th><th>Valor</th><th>Origem</th><th>Data/Hora</th></tr>
+            </thead>
+            <tbody id="tb-ultimas">
+              <tr><td colspan="5" class="sem-dados">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: ALERTAS
+    ══════════════════════ -->
+    <section class="tela" id="tela-alertas">
+
+      <div class="tela-cab">
+        <h2>Alertas do Sistema</h2>
+        <p>Anomalias reportadas pelos operadores e alertas automaticos de leitura fora do limite.</p>
+      </div>
+
+      <div class="barra-acao">
+        <strong>Alertas nao lidos</strong>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secundario" onclick="marcarTodosLidos()">
+            <i class="bi bi-check-all"></i> Marcar todos como lidos
+          </button>
+          <button class="btn btn-secundario" onclick="carregarAlertas()">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          </button>
+        </div>
+      </div>
+
+      <div id="lista-alertas">
+        <p style="color:var(--sec); font-size:13px;">Carregando alertas...</p>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: EQUIPE
+    ══════════════════════ -->
+    <section class="tela" id="tela-equipe">
+
+      <div class="tela-cab">
+        <h2>Equipe de Operadores</h2>
+        <p>Visualize os operadores e o andamento das tarefas de cada um.</p>
+      </div>
+
+      <div class="grade-operadores" id="grade-operadores">
+        <p style="color:var(--sec); font-size:13px;">Carregando equipe...</p>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: TAREFAS
+    ══════════════════════ -->
+    <section class="tela" id="tela-tarefas">
+
+      <div class="tela-cab">
+        <h2>Tarefas</h2>
+        <p>Crie e atribua tarefas para os operadores da equipe.</p>
+      </div>
+
+      <!-- Formulário de nova tarefa -->
+      <div class="card">
+        <h3>Nova tarefa</h3>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Titulo</label>
+            <input type="text" id="tar-titulo" placeholder="Ex: Verificar pH do tanque 3" />
+          </div>
+          <div class="campo">
+            <label>Atribuir para</label>
+            <select id="tar-operador">
+              <option value="">Selecione o operador...</option>
+            </select>
+          </div>
+        </div>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Prioridade</label>
+            <select id="tar-prioridade">
+              <option value="baixa">Baixa</option>
+              <option value="normal" selected>Normal</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Prazo</label>
+            <input type="date" id="tar-prazo" />
+          </div>
+        </div>
+        <div class="campo">
+          <label>Descricao (opcional)</label>
+          <textarea id="tar-descricao" rows="3"
+            placeholder="Detalhes sobre o que deve ser feito..."></textarea>
+        </div>
+        <button class="btn btn-primario" onclick="criarTarefa()">
+          <i class="bi bi-plus-circle"></i> Criar tarefa
+        </button>
+        <div class="feedback" id="fb-tarefa"></div>
+      </div>
+
+      <!-- Lista de todas as tarefas -->
+      <div class="barra-acao">
+        <strong>Todas as tarefas</strong>
+        <button class="btn btn-secundario" onclick="carregarTarefas()">
+          <i class="bi bi-arrow-clockwise"></i> Atualizar
+        </button>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>Titulo</th><th>Operador</th><th>Prioridade</th><th>Status</th><th>Prazo</th><th>Remover</th></tr>
+          </thead>
+          <tbody id="tb-tarefas">
+            <tr><td colspan="6" class="sem-dados">Nenhuma tarefa ainda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: VALIDAR LEITURAS
+    ══════════════════════ -->
+    <section class="tela" id="tela-leituras">
+
+      <div class="tela-cab">
+        <h2>Validar Leituras</h2>
+        <p>Revise as medicoes registradas pelos operadores e identifique valores fora do padrao.</p>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card">
+        <h3>Filtros</h3>
+        <div class="grade-campos tres">
+          <div class="campo">
+            <label>Tipo</label>
+            <select id="fil-tipo">
+              <option value="">Todos</option>
+              <option value="ph">pH</option>
+              <option value="turbidez">Turbidez</option>
+              <option value="temperatura">Temperatura</option>
+              <option value="nivel">Nivel</option>
+              <option value="vazao">Vazao</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Origem</label>
+            <select id="fil-origem">
+              <option value="">Todas</option>
+              <option value="manual">Manual</option>
+              <option value="simulado">Simulado</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Data</label>
+            <input type="date" id="fil-data" />
+          </div>
+        </div>
+        <button class="btn btn-primario" onclick="carregarLeituras()">
+          <i class="bi bi-search"></i> Filtrar
+        </button>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>Sensor</th><th>Tipo</th><th>Valor</th><th>Origem</th><th>Data/Hora</th><th>Status</th></tr>
+          </thead>
+          <tbody id="tb-leituras">
+            <tr><td colspan="6" class="sem-dados">Use os filtros acima para buscar leituras.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: APROVAR DOCUMENTOS
+    ══════════════════════ -->
+    <section class="tela" id="tela-documentos">
+
+      <div class="tela-cab">
+        <h2>Aprovar Documentos</h2>
+        <p>Documentos enviados pelos operadores aguardando sua aprovacao.</p>
+      </div>
+
+      <div id="lista-docs-aprovacao">
+        <p style="color:var(--sec); font-size:13px;">Carregando documentos...</p>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: ORDENS DE MANUTENÇÃO
+    ══════════════════════ -->
+    <section class="tela" id="tela-manutencao">
+
+      <div class="tela-cab">
+        <h2>Ordens de Manutencao</h2>
+        <p>Gerencie as ordens abertas pelos operadores.</p>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>Equipamento</th><th>Descricao</th><th>Prioridade</th><th>Status</th><th>Abertura</th><th>Atualizar</th></tr>
+          </thead>
+          <tbody id="tb-manutencao">
+            <tr><td colspan="6" class="sem-dados">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: RELATÓRIO DE TURNO
+    ══════════════════════ -->
+    <section class="tela" id="tela-relatorio">
+
+      <div class="tela-cab">
+        <h2>Relatorio de Turno</h2>
+        <p>Gere e exporte o resumo do turno atual.</p>
+      </div>
+
+      <div class="card">
+        <h3>Parametros do relatorio</h3>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Data</label>
+            <input type="date" id="rel-data" />
+          </div>
+          <div class="campo">
+            <label>Turno</label>
+            <select id="rel-turno">
+              <option value="manha">Manha (06h - 14h)</option>
+              <option value="tarde">Tarde (14h - 22h)</option>
+              <option value="noite">Noite (22h - 06h)</option>
+              <option value="dia_completo">Dia completo</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primario" onclick="gerarRelatorio()">
+          <i class="bi bi-file-earmark-bar-graph"></i> Gerar relatorio
+        </button>
+        <button class="btn btn-secundario" id="btn-exportar" style="display:none;" onclick="exportarRelatorio()">
+          <i class="bi bi-download"></i> Exportar TXT
+        </button>
+      </div>
+
+      <!-- Conteúdo do relatório gerado -->
+      <div id="rel-conteudo" style="display:none;">
+        <div class="card">
+          <h3 id="rel-titulo-gerado"></h3>
+          <div id="rel-corpo" style="font-size:13px; line-height:1.8;"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════
+         TELA: MEUS DOCUMENTOS
+    ══════════════════════ -->
+    <section class="tela" id="tela-documentos-proprios">
+
+      <div class="tela-cab">
+        <h2>Meus Documentos</h2>
+        <p>Crie documentos e envie para operadores ou para registro.</p>
+      </div>
+
+      <div class="card">
+        <h3>Novo documento</h3>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Modelo (template)</label>
+            <select id="mdoc-template" onchange="carregarTemplateDoc()">
+              <option value="">Selecione um modelo...</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Titulo</label>
+            <input type="text" id="mdoc-titulo" placeholder="Titulo do documento" />
+          </div>
+        </div>
+        <div class="campo">
+          <label>Conteudo</label>
+          <textarea id="mdoc-conteudo" rows="8"
+            placeholder="Selecione um modelo ou escreva o conteudo aqui."></textarea>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-secundario" onclick="salvarMeuDoc('rascunho')">
+            <i class="bi bi-save"></i> Salvar rascunho
+          </button>
+          <button class="btn btn-primario" onclick="salvarMeuDoc('aprovado')">
+            <i class="bi bi-check-circle"></i> Finalizar documento
+          </button>
+        </div>
+        <div class="feedback" id="fb-mdoc"></div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr><th>Titulo</th><th>Status</th><th>Criado em</th></tr>
+          </thead>
+          <tbody id="tb-mdocs">
+            <tr><td colspan="3" class="sem-dados">Nenhum documento criado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </div>
+</div>
+
+
+<script>
+
+  // ── Configuração do Supabase ──────────────────────────────
+  var SUPA_URL = 'https://huvohrqgcrgbdqwhgrro.supabase.co';
+  var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1dm9ocnFnY3JnYmRxd2hncnJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMTQ0NDEsImV4cCI6MjA4ODg5MDQ0MX0.1mNShzvzSPfljGKGVwMvDmY6_aiDxeaaHXVZ5K9i6oM';
+  var { createClient } = supabase;
+  var db = createClient(SUPA_URL, SUPA_KEY);
+
+  // Dados do relatório gerado (para exportação)
+  var dadosRelatorio = null;
+
+  // UID e nome do supervisor logado
+  var uid          = '';
+  var nomeUsuario  = '';
+
+  // Limites de alerta (carregados do banco)
+  var config = { ph_min: 6.5, ph_max: 8.5, turb_max: 5, temp_max: 30, vazao_max: 10, nivel_min: 20 };
+
+  // ── Inicialização ─────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    verificarSessao();
+    preencherTopbar();
+    carregarConfig();
+    carregarDashboard();
+    carregarAlertas();
+    carregarEquipe();
+    carregarOperadoresSelect();
+    carregarTarefas();
+    carregarOrdens();
+    carregarTemplatesSelect();
+    carregarMeusDocs();
+    carregarDocsAprovacao();
+    // Preenche o campo data com hoje
+    var hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('rel-data').value  = hoje;
+    document.getElementById('fil-data').value  = hoje;
+    document.getElementById('tar-prazo').value = hoje;
+  });
+
+  // Verifica se o usuário está logado e é supervisor
+  async function verificarSessao() {
+    var sessao = await db.auth.getSession();
+    if (!sessao.data.session) {
+      window.location.href = 'index.html';
+      return;
+    }
+    uid         = localStorage.getItem('sgh_uid')   || '';
+    nomeUsuario = localStorage.getItem('sgh_nome')  || 'Supervisor';
+    var cargo   = localStorage.getItem('sgh_cargo') || '';
+
+    if (cargo !== 'supervisor') {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    document.getElementById('sb-usuario').textContent = nomeUsuario;
+
+    var h    = new Date().getHours();
+    var saud = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    document.getElementById('saudacao').textContent = saud + ', ' + nomeUsuario + '!';
+  }
+
+  function preencherTopbar() {
+    var data = new Date().toLocaleDateString('pt-BR', {
+      weekday: 'short', day: 'numeric', month: 'short'
+    });
+    document.getElementById('topbar-data').textContent = data;
+  }
+
+  // Carrega os limites configurados pelo admin
+  async function carregarConfig() {
+    var r = await db.from('configuracao').select('*').eq('id', 1).single();
+    if (r.data) {
+      config.ph_min   = r.data.ph_min   || 6.5;
+      config.ph_max   = r.data.ph_max   || 8.5;
+      config.turb_max = r.data.turb_max || 5;
+      config.temp_max = r.data.temp_max || 30;
+    }
+  }
+
+  // ── Navegação entre telas ─────────────────────────────────
+  function irPara(tela, link) {
+    document.querySelectorAll('.tela').forEach(function(t) {
+      t.classList.remove('ativa');
+    });
+    document.querySelectorAll('.sb-menu a').forEach(function(a) {
+      a.classList.remove('ativo');
+    });
+    document.getElementById('tela-' + tela).classList.add('ativa');
+    if (link) link.classList.add('ativo');
+    document.getElementById('topbar-titulo').textContent =
+      link ? link.textContent.trim() : tela;
+    return false;
+  }
+
+  // ── DASHBOARD ─────────────────────────────────────────────
+  async function carregarDashboard() {
+
+    // Conta operadores na equipe
+    var r1 = await db.from('perfil').select('id', { count: 'exact', head: true }).eq('cargo', 'operador');
+    document.getElementById('res-operadores').textContent = r1.count || 0;
+
+    // Medicoes de hoje
+    var hoje = new Date().toISOString().split('T')[0];
+    var r2 = await db.from('medicao')
+      .select('id_medicao', { count: 'exact', head: true })
+      .gte('data_hora', hoje);
+    document.getElementById('res-medicoes').textContent = r2.count || 0;
+
+    // Alertas nao lidos
+    var r3 = await db.from('alerta')
+      .select('id', { count: 'exact', head: true })
+      .eq('lido', false);
+    document.getElementById('res-alertas').textContent = r3.count || 0;
+    // Atualiza badge no menu
+    if (r3.count > 0) {
+      var ba = document.getElementById('badge-alertas');
+      ba.textContent = r3.count;
+      ba.style.display = 'inline-block';
+    }
+
+    // Documentos aguardando aprovacao
+    var r4 = await db.from('documento')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'enviado');
+    document.getElementById('res-docs').textContent = r4.count || 0;
+    if (r4.count > 0) {
+      var bd = document.getElementById('badge-docs');
+      bd.textContent = r4.count;
+      bd.style.display = 'inline-block';
+    }
+
+    // Tarefas abertas
+    var r5 = await db.from('tarefa')
+      .select('id', { count: 'exact', head: true })
+      .neq('status', 'concluida');
+    document.getElementById('res-tarefas').textContent = r5.count || 0;
+    if (r5.count > 0) {
+      var bt = document.getElementById('badge-tarefas');
+      bt.textContent = r5.count;
+      bt.style.display = 'inline-block';
+    }
+
+    // Ordens de manutenção abertas
+    var r6 = await db.from('ordem_manutencao')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'aberta');
+    document.getElementById('res-ordens').textContent = r6.count || 0;
+
+    // Alertas recentes no dashboard (últimos 5)
+    var r7 = await db.from('alerta')
+      .select('*')
+      .order('criado_em', { ascending: false })
+      .limit(5);
+
+    var el = document.getElementById('alertas-dashboard');
+    if (!r7.data || r7.data.length === 0) {
+      el.innerHTML = '<p style="font-size:13px; color:var(--sec);">Nenhum alerta recente.</p>';
+    } else {
+      el.innerHTML = r7.data.map(function(a) {
+        var cls = a.lido ? 'info' : (a.tipo === 'parametro_fora' ? 'critico' : 'atencao');
+        return '<div class="alerta-item ' + cls + '">' +
+          '<div>' +
+            '<div class="alerta-msg">' + (a.mensagem || a.tipo) + '</div>' +
+            '<div class="alerta-hora">' + formatarData(a.criado_em) + '</div>' +
+          '</div>' +
+          (!a.lido ? '<button class="btn btn-secundario" style="padding:4px 10px;font-size:11px;" ' +
+            'onclick="marcarLido(\'' + a.id + '\')">Marcar lido</button>' : '') +
+        '</div>';
+      }).join('');
+    }
+
+    // Últimas leituras
+    var r8 = await db.from('medicao')
+      .select('*, sensor(nome_sensor)')
+      .order('data_hora', { ascending: false })
+      .limit(8);
+
+    var tb = document.getElementById('tb-ultimas');
+    if (!r8.data || r8.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="5" class="sem-dados">Nenhuma leitura hoje.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = r8.data.map(function(m) {
+      // Destaca visualmente valores fora do limite
+      var status = calcularStatus(m.tipo, parseFloat(m.valor));
+      var cor = status === 'critico' ? 'color:#a01a1a; font-weight:600;' :
+                status === 'atencao' ? 'color:#92400e;' : '';
+      return '<tr>' +
+        '<td>' + (m.sensor ? m.sensor.nome_sensor : '—') + '</td>' +
+        '<td>' + labelTipo(m.tipo) + '</td>' +
+        '<td style="' + cor + '">' + m.valor + ' ' + unidade(m.tipo) + '</td>' +
+        '<td>' + (m.origem || '—') + '</td>' +
+        '<td>' + formatarData(m.data_hora) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // ── ALERTAS ───────────────────────────────────────────────
+  async function carregarAlertas() {
+    var r = await db.from('alerta')
+      .select('*')
+      .order('criado_em', { ascending: false })
+      .limit(50);
+
+    var el = document.getElementById('lista-alertas');
+    if (!r.data || r.data.length === 0) {
+      el.innerHTML = '<p style="font-size:13px; color:var(--sec);">Nenhum alerta registrado.</p>';
+      return;
+    }
+
+    el.innerHTML = r.data.map(function(a) {
+      var cls = a.lido ? 'info' : (a.tipo === 'parametro_fora' ? 'critico' : 'atencao');
+      return '<div class="alerta-item ' + cls + '">' +
+        '<div style="flex:1;">' +
+          '<div class="alerta-msg">' + (a.mensagem || a.tipo) + '</div>' +
+          '<div class="alerta-hora">' + formatarData(a.criado_em) + ' — ' +
+            '<span class="badge badge-' + (a.lido ? 'lido' : 'nao_lido') + '">' +
+            (a.lido ? 'Lido' : 'Nao lido') + '</span>' +
+          '</div>' +
+        '</div>' +
+        (!a.lido ? '<button class="btn btn-secundario" style="padding:4px 10px;font-size:11px;" ' +
+          'onclick="marcarLido(\'' + a.id + '\')">Marcar lido</button>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  // Marca um alerta como lido
+  async function marcarLido(id) {
+    await db.from('alerta').update({ lido: true }).eq('id', id);
+    carregarAlertas();
+    carregarDashboard();
+  }
+
+  // Marca todos os alertas como lidos de uma vez
+  async function marcarTodosLidos() {
+    await db.from('alerta').update({ lido: true }).eq('lido', false);
+    carregarAlertas();
+    carregarDashboard();
+  }
+
+  // ── EQUIPE ────────────────────────────────────────────────
+  async function carregarEquipe() {
+    var r = await db.from('perfil').select('*').eq('cargo', 'operador');
+    var el = document.getElementById('grade-operadores');
+
+    if (!r.data || r.data.length === 0) {
+      el.innerHTML = '<p style="font-size:13px; color:var(--sec);">Nenhum operador cadastrado.</p>';
+      return;
+    }
+
+    // Para cada operador, conta as tarefas pendentes
+    var html = '';
+    for (var i = 0; i < r.data.length; i++) {
+      var op = r.data[i];
+      var t = await db.from('tarefa')
+        .select('id', { count: 'exact', head: true })
+        .eq('atribuido_a', op.id)
+        .neq('status', 'concluida');
+
+      html += '<div class="card-operador">' +
+        '<div class="co-nome">' + (op.nome || '—') + '</div>' +
+        '<div class="co-email">' + (op.email || '—') + '</div>' +
+        '<div class="co-tarefas">Tarefas abertas: <strong>' + (t.count || 0) + '</strong></div>' +
+      '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  // Carrega operadores no select de atribuição de tarefa
+  async function carregarOperadoresSelect() {
+    var r = await db.from('perfil').select('id, nome').eq('cargo', 'operador');
+    var sel = document.getElementById('tar-operador');
+    if (!r.data || r.data.length === 0) {
+      sel.innerHTML = '<option value="">Nenhum operador cadastrado</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">Selecione o operador...</option>' +
+      r.data.map(function(op) {
+        return '<option value="' + op.id + '">' + op.nome + '</option>';
+      }).join('');
+  }
+
+  // ── TAREFAS ───────────────────────────────────────────────
+  async function criarTarefa() {
+    var titulo     = document.getElementById('tar-titulo').value.trim();
+    var operadorId = document.getElementById('tar-operador').value;
+    var prioridade = document.getElementById('tar-prioridade').value;
+    var prazo      = document.getElementById('tar-prazo').value;
+    var descricao  = document.getElementById('tar-descricao').value.trim();
+    var fb         = document.getElementById('fb-tarefa');
+
+    if (!titulo || !operadorId) {
+      mostrarFeedback(fb, 'Informe o titulo e o operador.', 'erro');
+      return;
+    }
+
+    var r = await db.from('tarefa').insert({
+      titulo:        titulo,
+      descricao:     descricao || null,
+      atribuido_a:   operadorId,
+      criado_por:    uid,
+      status:        'pendente',
+      prioridade:    prioridade,
+      prazo:         prazo || null,
+      criado_em:     new Date().toISOString(),
+      atualizado_em: new Date().toISOString()
+    });
+
+    if (r.error) {
+      mostrarFeedback(fb, 'Erro: ' + r.error.message, 'erro');
+      return;
+    }
+
+    document.getElementById('tar-titulo').value    = '';
+    document.getElementById('tar-descricao').value = '';
+    mostrarFeedback(fb, 'Tarefa criada e atribuida com sucesso!', 'sucesso');
+    carregarTarefas();
+  }
+
+  async function carregarTarefas() {
+    // Carrega todas as tarefas com o nome do operador atribuído
+    var r = await db.from('tarefa')
+      .select('*, atribuido:perfil!tarefa_atribuido_a_fkey(nome)')
+      .order('criado_em', { ascending: false });
+
+    var tb = document.getElementById('tb-tarefas');
+    if (!r.data || r.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="6" class="sem-dados">Nenhuma tarefa criada.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = r.data.map(function(t) {
+      var operadorNome = t.atribuido ? t.atribuido.nome : '—';
+      return '<tr>' +
+        '<td>' +
+          '<div style="font-weight:600;">' + t.titulo + '</div>' +
+          (t.descricao ? '<div style="font-size:12px;color:var(--sec);">' + t.descricao + '</div>' : '') +
+        '</td>' +
+        '<td>' + operadorNome + '</td>' +
+        '<td><span class="badge badge-' + t.prioridade + '">' + t.prioridade + '</span></td>' +
+        '<td><span class="badge badge-' + t.status + '">' + labelStatus(t.status) + '</span></td>' +
+        '<td>' + (t.prazo ? formatarData(t.prazo) : '—') + '</td>' +
+        '<td>' +
+          '<button class="btn btn-perigo" style="padding:4px 10px;font-size:12px;" ' +
+          'onclick="removerTarefa(\'' + t.id + '\')">' +
+          '<i class="bi bi-trash"></i></button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  async function removerTarefa(id) {
+    if (!confirm('Remover esta tarefa?')) return;
+    await db.from('tarefa').delete().eq('id', id);
+    carregarTarefas();
+  }
+
+  // ── VALIDAR LEITURAS ──────────────────────────────────────
+  async function carregarLeituras() {
+    var tipo   = document.getElementById('fil-tipo').value;
+    var origem = document.getElementById('fil-origem').value;
+    var data   = document.getElementById('fil-data').value;
+
+    var query = db.from('medicao')
+      .select('*, sensor(nome_sensor)')
+      .order('data_hora', { ascending: false })
+      .limit(100);
+
+    if (tipo)   query = query.eq('tipo', tipo);
+    if (origem) query = query.eq('origem', origem);
+    if (data)   query = query.gte('data_hora', data).lte('data_hora', data + 'T23:59:59');
+
+    var r = await query;
+    var tb = document.getElementById('tb-leituras');
+
+    if (!r.data || r.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="6" class="sem-dados">Nenhuma leitura encontrada.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = r.data.map(function(m) {
+      var status = calcularStatus(m.tipo, parseFloat(m.valor));
+      var badgeCls = status === 'critico' ? 'badge-alta' :
+                     status === 'atencao' ? 'badge-pendente' : 'badge-aprovado';
+      var label    = status === 'critico' ? 'Fora do limite' :
+                     status === 'atencao' ? 'Atencao' : 'Normal';
+      return '<tr>' +
+        '<td>' + (m.sensor ? m.sensor.nome_sensor : '—') + '</td>' +
+        '<td>' + labelTipo(m.tipo) + '</td>' +
+        '<td>' + m.valor + ' ' + unidade(m.tipo) + '</td>' +
+        '<td>' + (m.origem || '—') + '</td>' +
+        '<td>' + formatarData(m.data_hora) + '</td>' +
+        '<td><span class="badge ' + badgeCls + '">' + label + '</span></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // ── APROVAR DOCUMENTOS ────────────────────────────────────
+  async function carregarDocsAprovacao() {
+    // Busca documentos enviados por operadores
+    var r = await db.from('documento')
+      .select('*, criado:perfil!documento_criado_por_fkey(nome)')
+      .eq('status', 'enviado')
+      .order('criado_em', { ascending: false });
+
+    var el = document.getElementById('lista-docs-aprovacao');
+    if (!r.data || r.data.length === 0) {
+      el.innerHTML = '<p style="font-size:13px; color:var(--sec);">Nenhum documento aguardando aprovacao.</p>';
+      return;
+    }
+
+    el.innerHTML = r.data.map(function(d) {
+      return '<div class="card" style="margin-bottom:16px;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">' +
+          '<div>' +
+            '<div style="font-weight:700; font-size:14px;">' + d.titulo + '</div>' +
+            '<div style="font-size:12px; color:var(--sec); margin-top:3px;">' +
+              'Enviado por: ' + (d.criado ? d.criado.nome : '—') +
+              ' &mdash; ' + formatarData(d.criado_em) +
+            '</div>' +
+          '</div>' +
+          '<span class="badge badge-enviado">Aguardando</span>' +
+        '</div>' +
+        '<div style="background:var(--fundo); border-radius:4px; padding:12px; font-size:13px; ' +
+          'line-height:1.6; white-space:pre-wrap; margin-bottom:14px; max-height:200px; overflow-y:auto;">' +
+          d.conteudo +
+        '</div>' +
+        '<div style="display:flex; gap:10px;">' +
+          '<button class="btn btn-verde" onclick="aprovarDoc(\'' + d.id + '\')">' +
+            '<i class="bi bi-check-circle"></i> Aprovar' +
+          '</button>' +
+          '<button class="btn btn-perigo" onclick="rejeitarDoc(\'' + d.id + '\')">' +
+            '<i class="bi bi-x-circle"></i> Rejeitar' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function aprovarDoc(id) {
+    await db.from('documento').update({
+      status: 'aprovado',
+      aprovado_por: uid,
+      atualizado_em: new Date().toISOString()
+    }).eq('id', id);
+    carregarDocsAprovacao();
+    carregarDashboard();
+  }
+
+  async function rejeitarDoc(id) {
+    await db.from('documento').update({
+      status: 'rejeitado',
+      atualizado_em: new Date().toISOString()
+    }).eq('id', id);
+    carregarDocsAprovacao();
+    carregarDashboard();
+  }
+
+  // ── ORDENS DE MANUTENÇÃO ──────────────────────────────────
+  async function carregarOrdens() {
+    var r = await db.from('ordem_manutencao')
+      .select('*, solicitante:perfil!ordem_manutencao_solicitado_por_fkey(nome)')
+      .order('criado_em', { ascending: false });
+
+    var tb = document.getElementById('tb-manutencao');
+    if (!r.data || r.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="6" class="sem-dados">Nenhuma ordem de manutencao.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = r.data.map(function(o) {
+      var opts = ['aberta','em_execucao','concluida'].map(function(s) {
+        return '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' +
+               labelOrdemStatus(s) + '</option>';
+      }).join('');
+
+      return '<tr>' +
+        '<td>' + o.equipamento + '</td>' +
+        '<td style="font-size:12px;">' + (o.descricao || '—').substring(0, 60) + '...</td>' +
+        '<td><span class="badge badge-' + o.prioridade + '">' + o.prioridade + '</span></td>' +
+        '<td><span class="badge badge-' + o.status + '">' + labelOrdemStatus(o.status) + '</span></td>' +
+        '<td>' + formatarData(o.criado_em) + '</td>' +
+        '<td>' +
+          '<select onchange="atualizarOrdem(\'' + o.id + '\', this.value)" style="padding:4px 8px;font-size:12px;">' +
+          opts + '</select>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  async function atualizarOrdem(id, novoStatus) {
+    await db.from('ordem_manutencao').update({
+      status: novoStatus,
+      atualizado_em: new Date().toISOString()
+    }).eq('id', id);
+  }
+
+  // ── RELATÓRIO DE TURNO ────────────────────────────────────
+  async function gerarRelatorio() {
+    var data  = document.getElementById('rel-data').value;
+    var turno = document.getElementById('rel-turno').value;
+
+    if (!data) { alert('Selecione uma data.'); return; }
+
+    // Define o intervalo de horas conforme o turno
+    var horaInicio, horaFim;
+    switch (turno) {
+      case 'manha':       horaInicio = '06:00'; horaFim = '14:00'; break;
+      case 'tarde':       horaInicio = '14:00'; horaFim = '22:00'; break;
+      case 'noite':       horaInicio = '22:00'; horaFim = '23:59'; break;
+      default:            horaInicio = '00:00'; horaFim = '23:59';
+    }
+
+    var inicio = data + 'T' + horaInicio + ':00';
+    var fim    = data + 'T' + horaFim + ':59';
+
+    // Busca as medições do período
+    var rMed = await db.from('medicao')
+      .select('tipo, valor, origem, data_hora')
+      .gte('data_hora', inicio)
+      .lte('data_hora', fim)
+      .order('data_hora', { ascending: true });
+
+    // Busca alertas do período
+    var rAler = await db.from('alerta')
+      .select('mensagem, criado_em, lido')
+      .gte('criado_em', inicio)
+      .lte('criado_em', fim);
+
+    // Busca ordens abertas
+    var rOrdens = await db.from('ordem_manutencao')
+      .select('equipamento, prioridade, status, criado_em')
+      .gte('criado_em', inicio)
+      .lte('criado_em', fim);
+
+    var medicoes  = rMed.data   || [];
+    var alertas   = rAler.data  || [];
+    var ordens    = rOrdens.data || [];
+
+    // Calcula médias por tipo
+    var medias = {};
+    var contagens = {};
+    medicoes.forEach(function(m) {
+      if (!medias[m.tipo]) { medias[m.tipo] = 0; contagens[m.tipo] = 0; }
+      medias[m.tipo] += parseFloat(m.valor);
+      contagens[m.tipo]++;
+    });
+
+    var turnoLabels = {
+      manha: 'Manha (06h - 14h)', tarde: 'Tarde (14h - 22h)',
+      noite: 'Noite (22h - 06h)', dia_completo: 'Dia Completo'
+    };
+
+    // Monta o texto do relatório
+    var linhas = [
+      'RELATORIO DE TURNO — SGH / Color & Textil',
+      '==========================================',
+      'Data:        ' + new Date(data + 'T12:00:00').toLocaleDateString('pt-BR'),
+      'Turno:       ' + turnoLabels[turno],
+      'Supervisor:  ' + nomeUsuario,
+      'Gerado em:   ' + new Date().toLocaleString('pt-BR'),
+      '',
+      '-- MEDICOES (' + medicoes.length + ' registros) --',
+    ];
+
+    var tipos = ['ph', 'turbidez', 'temperatura', 'nivel', 'vazao'];
+    tipos.forEach(function(tipo) {
+      if (contagens[tipo]) {
+        var media = (medias[tipo] / contagens[tipo]).toFixed(2);
+        linhas.push('  ' + labelTipo(tipo) + ': media ' + media + ' ' + unidade(tipo) +
+                    ' (' + contagens[tipo] + ' leituras)');
+      }
+    });
+
+    linhas.push('');
+    linhas.push('-- ALERTAS (' + alertas.length + ') --');
+    if (alertas.length === 0) {
+      linhas.push('  Nenhum alerta no periodo.');
+    } else {
+      alertas.forEach(function(a) {
+        linhas.push('  [' + formatarData(a.criado_em) + '] ' + a.mensagem);
+      });
+    }
+
+    linhas.push('');
+    linhas.push('-- ORDENS DE MANUTENCAO (' + ordens.length + ') --');
+    if (ordens.length === 0) {
+      linhas.push('  Nenhuma ordem no periodo.');
+    } else {
+      ordens.forEach(function(o) {
+        linhas.push('  ' + o.equipamento + ' — ' + o.status + ' [' + o.prioridade + ']');
+      });
+    }
+
+    linhas.push('');
+    linhas.push('Assinatura do supervisor: _____________________');
+
+    // Exibe o relatório na tela
+    dadosRelatorio = linhas.join('\n');
+    document.getElementById('rel-titulo-gerado').textContent =
+      'Relatorio — ' + new Date(data + 'T12:00:00').toLocaleDateString('pt-BR') + ' — ' + turnoLabels[turno];
+    document.getElementById('rel-corpo').innerHTML =
+      '<pre style="font-family:monospace; font-size:12px; line-height:1.7;">' + dadosRelatorio + '</pre>';
+    document.getElementById('rel-conteudo').style.display = 'block';
+    document.getElementById('btn-exportar').style.display = 'inline-flex';
+  }
+
+  // Exporta o relatório como arquivo TXT
+  function exportarRelatorio() {
+    if (!dadosRelatorio) return;
+    var blob = new Blob([dadosRelatorio], { type: 'text/plain;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href     = url;
+    link.download = 'relatorio_turno_' + new Date().toISOString().split('T')[0] + '.txt';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── MEUS DOCUMENTOS (supervisor) ─────────────────────────
+  async function carregarTemplatesSelect() {
+    var r = await db.from('template_documento').select('id, titulo, conteudo');
+    var sel = document.getElementById('mdoc-template');
+    if (!r.data || r.data.length === 0) {
+      sel.innerHTML = '<option value="">Nenhum template disponivel</option>';
+      return;
+    }
+    sel._templates = r.data;
+    sel.innerHTML  = '<option value="">Selecione um modelo...</option>' +
+      r.data.map(function(t) {
+        return '<option value="' + t.id + '">' + t.titulo + '</option>';
+      }).join('');
+  }
+
+  function carregarTemplateDoc() {
+    var sel      = document.getElementById('mdoc-template');
+    var id       = sel.value;
+    var templates = sel._templates || [];
+    var template = templates.find(function(t) { return t.id === id; });
+    if (template) {
+      document.getElementById('mdoc-conteudo').value = template.conteudo || '';
+      document.getElementById('mdoc-titulo').value   = template.titulo + ' — ' +
+        new Date().toLocaleDateString('pt-BR');
+    }
+  }
+
+  async function salvarMeuDoc(status) {
+    var templateId = document.getElementById('mdoc-template').value;
+    var titulo     = document.getElementById('mdoc-titulo').value.trim();
+    var conteudo   = document.getElementById('mdoc-conteudo').value.trim();
+    var fb         = document.getElementById('fb-mdoc');
+
+    if (!titulo || !conteudo) {
+      mostrarFeedback(fb, 'Preencha o titulo e o conteudo.', 'erro');
+      return;
+    }
+
+    var r = await db.from('documento').insert({
+      id_template:   templateId || null,
+      titulo:        titulo,
+      conteudo:      conteudo,
+      status:        status,
+      criado_por:    uid,
+      criado_em:     new Date().toISOString(),
+      atualizado_em: new Date().toISOString()
+    });
+
+    if (r.error) {
+      mostrarFeedback(fb, 'Erro: ' + r.error.message, 'erro');
+      return;
+    }
+
+    document.getElementById('mdoc-titulo').value   = '';
+    document.getElementById('mdoc-conteudo').value = '';
+    mostrarFeedback(fb, status === 'rascunho' ? 'Rascunho salvo!' : 'Documento finalizado!', 'sucesso');
+    carregarMeusDocs();
+  }
+
+  async function carregarMeusDocs() {
+    if (!uid) return;
+    var r = await db.from('documento')
+      .select('*')
+      .eq('criado_por', uid)
+      .order('criado_em', { ascending: false });
+
+    var tb = document.getElementById('tb-mdocs');
+    if (!r.data || r.data.length === 0) {
+      tb.innerHTML = '<tr><td colspan="3" class="sem-dados">Nenhum documento criado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = r.data.map(function(d) {
+      return '<tr>' +
+        '<td>' + d.titulo + '</td>' +
+        '<td><span class="badge badge-' + d.status + '">' + labelDocStatus(d.status) + '</span></td>' +
+        '<td>' + formatarData(d.criado_em) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // ── Sair do sistema ───────────────────────────────────────
+  async function sair() {
+    await db.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  // ── Utilitários ───────────────────────────────────────────
+
+  function mostrarFeedback(el, msg, tipo) {
+    el.textContent   = msg;
+    el.className     = 'feedback ' + tipo;
+    el.style.display = 'block';
+    setTimeout(function() { el.style.display = 'none'; }, 3500);
+  }
+
+  function formatarData(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  // Calcula status do valor conforme os limites configurados
+  function calcularStatus(tipo, valor) {
+    if (tipo === 'ph') {
+      if (valor < config.ph_min || valor > config.ph_max) return 'critico';
+      if (valor < config.ph_min + 0.5 || valor > config.ph_max - 0.5) return 'atencao';
+    } else if (tipo === 'turbidez') {
+      if (valor > config.turb_max) return 'critico';
+      if (valor > config.turb_max * 0.8) return 'atencao';
+    } else if (tipo === 'temperatura') {
+      if (valor > config.temp_max) return 'critico';
+      if (valor > config.temp_max * 0.9) return 'atencao';
+    } else if (tipo === 'nivel') {
+      if (valor < config.nivel_min) return 'critico';
+      if (valor < config.nivel_min + 10) return 'atencao';
+    } else if (tipo === 'vazao') {
+      if (valor > config.vazao_max) return 'critico';
+      if (valor > config.vazao_max * 0.85) return 'atencao';
+    }
+    return 'normal';
+  }
+
+  function labelTipo(tipo) {
+    var l = { ph: 'pH', turbidez: 'Turbidez', temperatura: 'Temperatura', nivel: 'Nivel', vazao: 'Vazao' };
+    return l[tipo] || tipo;
+  }
+
+  function unidade(tipo) {
+    var u = { ph: '', turbidez: 'NTU', temperatura: '°C', nivel: '%', vazao: 'L/min' };
+    return u[tipo] || '';
+  }
+
+  function labelStatus(s) {
+    var l = { pendente: 'Pendente', em_andamento: 'Em andamento', concluida: 'Concluida' };
+    return l[s] || s;
+  }
+
+  function labelDocStatus(s) {
+    var l = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
+    return l[s] || s;
+  }
+
+  function labelOrdemStatus(s) {
+    var l = { aberta: 'Aberta', em_execucao: 'Em execucao', concluida: 'Concluida' };
+    return l[s] || s;
+  }
+
+</script>
+
+</body>
+</html>
